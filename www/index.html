@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>Zet Display</title>
+    <link rel="shortcut icon" href="assets/images/favicon.png" />
+    <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+    <link rel="stylesheet" type="text/css" href="assets/vendors/reboot.css" />
+    <link rel="stylesheet" type="text/css" href="assets/css/app.css" />
+  </head>
+  <body>
+    <div
+      id="app"
+      :class="[]"
+      @click="onBodyClick()"
+    >
+        <div style="display: none;" v-show="true">
+            <div v-if="url == '' || editMode">
+                <h3>Zet Display {{ version }}</h3>
+                <p>Powered by Zetmel</p>
+                <div class="settings">
+                    <div class="input">
+                        <input ref="urlInput" type="url" v-model="url" placeholder="Enter the URL">
+                    </div>
+                    <div class="action">
+                        <button :style="{opacity: url == '' ? '0.5' : '1'}" @click="goToUrl()">Go</button>
+                        <button class="secondary" @click="clearUrl()">Clear</button>
+                    </div>
+                </div>
+            </div>
+            <div v-if="url != '' && waitingCount">
+                <div>
+                    Presss Enter or Tap here
+                </div>
+                <div style="font-size: 48px;
+                margin-bottom: 24px;
+                margin-top: 24px; color: #F00;">{{ getWaitingCountDownMessage() }}</div>
+            </div>
+            <div v-if="url != '' && !waitingCount && exitCount">
+                <div>
+                    Presss back again
+                </div>
+                <div style="font-size: 48px;
+                margin-bottom: 24px;
+                margin-top: 24px;">{{ getExitCountDownMessage() }}</div>
+            </div>
+            <div v-if="url != '' && !editMode && !waitingCount && !exitCount">
+                <h3>Zet Display {{ version }}</h3>
+                <p>Powered by Zetmel</p>
+                <div>Initializing...</div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="assets/vendors/vue.min.js"></script>
+    <script type="text/javascript" src="assets/js/app.js"></script>
+    <script type="text/javascript">
+      window.app = new App();
+      var hasCordova = !!window.cordova;
+    </script>
+    <script type="text/javascript">
+      if (hasCordova) {
+        document.addEventListener('deviceready', function () {
+          window.app.deviceReady();
+        });
+    } else {
+        window.app.deviceReady();
+        //   alert('Not intended to run in a non-cordova environment');
+      }
+    </script>
+    <script type="text/javascript">
+      window.app.init(function () {
+        new Vue({
+          el: '#app',
+          data: app.data,
+          computed: {},
+          methods: {
+            onBodyClick() {
+                window.app.onBodyClick();
+            },
+            goToUrl() {
+                window.app.goToUrl();
+            },
+            clearUrl() {
+                var input = this.$refs.urlInput;
+                window.app.clearUrl(input);
+            },
+            getExitCountDownMessage() {
+                return window.app.getExitCountDownMessage();
+            },
+            getWaitingCountDownMessage() {
+                return window.app.getWaitingCountDownMessage();
+            }
+          },
+          created() {
+            app.created();
+          },
+          mounted() {
+            app.mounted();
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

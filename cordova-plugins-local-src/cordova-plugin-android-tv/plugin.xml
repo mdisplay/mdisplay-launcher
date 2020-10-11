@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin xmlns="http://cordova.apache.org/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-android-tv"
+    version="1.0.0">
+
+    <name>AndroidTVPlugin</name>
+    <description>Cordova Android TV Plugin</description>
+    <license>MIT</license>
+    <keywords>ecosystem:cordova,cordova-android,androidtv,tv</keywords>
+
+    <engines>
+        <engine name="cordova" version=">=3.0.0"/>
+    </engines>
+
+    <platform name="android">
+        <config-file target="AndroidManifest.xml" parent="/manifest/application/activity[@android:label='@string/activity_name']">
+            <intent-filter>
+
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" /><!-- Handler of app icon (required to be launcher) -->
+                <category android:name="android.intent.category.HOME" /><!-- Handler of Home button -->
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="tv.ouya.intent.category.APP"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </config-file>
+    </platform>
+</plugin>
