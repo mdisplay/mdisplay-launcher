@@ -5,7 +5,10 @@ class App {
     this.maxExitCount = 3;
     this.maxWaitingCount = 3;
     this.inAppBrowserRef = undefined;
+    this.urlEditable = true;
+    this.kioskMode = true;
     this.data = {
+      showIntroMessages: true,
       url: '',
       exitCount: 0,
       version: '1.1.4',
@@ -129,11 +132,17 @@ class App {
   }
 
   doGoToUrl() {
-    if(typeof cordova === 'undefined'){
-      alert('Redirect to this URL in Cordova environment: \n"' + this.data.url + '"');
+    if (typeof cordova === 'undefined') {
+      if (confirm('Redirect to this URL in Cordova environment: \n"' + this.data.url + '" Simulate this behaviour?')) {
+        window.location = this.data.url;
+      }
       return;
     }
-    this.inAppBrowserRef = cordova.InAppBrowser.open(this.data.url, '_blank', 'location=no,hardwareback=yes,footer=no,fullscreen=yes');
+    this.inAppBrowserRef = cordova.InAppBrowser.open(
+      this.data.url,
+      '_blank',
+      'location=no,hardwareback=yes,footer=no,fullscreen=' + (this.kioskMode ? 'yes' : 'no')
+    );
     this.inAppBrowserRef.addEventListener('loadstop', () => {
       // try {
       //   window.AndroidFullScreen.immersiveMode(function () {
@@ -146,6 +155,12 @@ class App {
       // }
     });
     this.inAppBrowserRef.addEventListener('exit', () => {
+      if (!this.urlEditable) {
+        setTimeout(() => {
+          this.doGoToUrl();
+        }, 1000);
+        return;
+      }
       if (this.data.exitCount >= this.maxExitCount) {
         this.data.exitCount = 0;
         this.writeSettings();
@@ -175,14 +190,14 @@ class App {
     this.doGoToUrl();
   }
 
-  goToUrlInit(){
-    if(this.data.url != ''/*  && !this.data.exitCount */){
+  goToUrlInit() {
+    if (this.data.url != '' /*  && !this.data.exitCount */) {
       this.goToUrl();
     }
   }
 
   clearUrl(input) {
-    if(!confirm('Are you sure to clear URL?')){
+    if (!confirm('Are you sure to clear URL?')) {
       return;
     }
     this.data.url = '';
@@ -202,35 +217,42 @@ class App {
 
   bindCordovaEvents() {
     // alert('babul 1');
+    if (this.kioskMode) {
       try {
-        window.AndroidFullScreen.immersiveMode(function () {
-          //
-        }, function () {
-          //
-        });
-      } catch(e){
+        window.AndroidFullScreen.immersiveMode(
+          function () {
+            //
+          },
+          function () {
+            //
+          }
+        );
+      } catch (e) {
         // alert('HA: ' + e);
       }
-      // alert('babul 2');
-      // window.askAndAutoUpdate();
-    document.addEventListener(
-      'backbutton',
-      (event) => {
-        event.preventDefault();
-        if(this.data.editMode){
-          this.readSettings();
-          if(this.data.url != ''){
-            this.goToUrl();          
+    }
+    // alert('babul 2');
+    // window.askAndAutoUpdate();
+    if (this.urlEditable) {
+      document.addEventListener(
+        'backbutton',
+        (event) => {
+          event.preventDefault();
+          if (this.data.editMode) {
+            this.readSettings();
+            if (this.data.url != '') {
+              this.goToUrl();
+            }
           }
-        }
-        // if (this.data.settingsMode) {
-        //   //
-        // } else {
-        // }
-        return false;
-      },
-      false
-    );
+          // if (this.data.settingsMode) {
+          //   //
+          // } else {
+          // }
+          return false;
+        },
+        false
+      );
+    }
   }
 
   deviceReady() {

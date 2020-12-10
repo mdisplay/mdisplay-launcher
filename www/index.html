@@ -45,7 +45,7 @@
                 margin-bottom: 24px;
                 margin-top: 24px;">{{ getExitCountDownMessage() }}</div>
             </div>
-            <div v-if="url != '' && !editMode && !waitingCount && !exitCount">
+            <div v-if="showIntroMessages && url != '' && !editMode && !waitingCount && !exitCount">
                 <h3>Zet Display {{ version }}</h3>
                 <p>Powered by Zetmel</p>
                 <div>Initializing...</div>
