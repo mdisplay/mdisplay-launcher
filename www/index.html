@@ -12,40 +12,51 @@
   <body>
     <div id="app" :class="[]" @click="onBodyClick()">
       <div style="display: none" v-show="true">
-        <div v-if="url == '' || editMode">
-          <h3>MDisplay Launcher {{ version }}</h3>
-          <!-- <p>Powered by Zetmel</p> -->
-          <div class="settings">
-            <div class="input">
-              <input ref="urlInput" type="url" v-model="url" @input="urlChanged()" placeholder="Enter the URL" />
-            </div>
-            <div class="action">
-              <button :style="{opacity: url == '' ? '0.5' : '1'}" @click="goToUrl()">Go</button>
-              <button class="secondary" @click="clearUrl()">Clear</button>
+        <section v-if="network.checking && !editMode && !waitingCount && !exitCount">
+          <h3 style="margin-top: 50px">Network Status: {{ network.status }}</h3>
+          <h3 v-if="network.checking" :style="{color: network.checkingMessage.color}">
+            {{ network.checkingMessage.text }}
+          </h3>
+          <!-- <pre>
+            {{ network }}
+          </pre> -->
+        </section>
+        <section v-else>
+          <div v-if="url == '' || editMode">
+            <h3>MDisplay Launcher {{ version }}</h3>
+            <!-- <p>Powered by Zetmel</p> -->
+            <div class="settings">
+              <div class="input">
+                <input ref="urlInput" type="url" v-model="url" @input="urlChanged()" placeholder="Enter the URL" />
+              </div>
+              <div class="action">
+                <button :style="{opacity: url == '' ? '0.5' : '1'}" @click="goToUrl()">Go</button>
+                <button class="secondary" @click="clearUrl()">Clear</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-if="url != '' && waitingCount">
-          <div>Presss Enter or Tap here</div>
-          <div style="font-size: 48px; margin-bottom: 24px; margin-top: 24px; color: #f00">
-            {{ getWaitingCountDownMessage() }}
+          <div v-if="url != '' && waitingCount">
+            <div>Presss Enter or Tap here</div>
+            <div style="font-size: 48px; margin-bottom: 24px; margin-top: 24px; color: #f00">
+              {{ getWaitingCountDownMessage() }}
+            </div>
           </div>
-        </div>
-        <div v-if="url != '' && !waitingCount && exitCount">
-          <div>Presss back again</div>
-          <div style="font-size: 48px; margin-bottom: 24px; margin-top: 24px">{{ getExitCountDownMessage() }}</div>
-        </div>
-        <div v-if="showIntroMessages && url != '' && !editMode && !waitingCount && !exitCount">
-          <h3>MDisplay Launcher {{ version }}</h3>
-          <!-- <p>Powered by Zetmel</p> -->
-          <div>Initializing...</div>
-        </div>
+          <div v-if="url != '' && !waitingCount && exitCount">
+            <div>Presss back again</div>
+            <div style="font-size: 48px; margin-bottom: 24px; margin-top: 24px">{{ getExitCountDownMessage() }}</div>
+          </div>
+          <div v-if="showIntroMessages && url != '' && !editMode && !waitingCount && !exitCount">
+            <h3>MDisplay Launcher {{ version }}</h3>
+            <!-- <p>Powered by Zetmel</p> -->
+            <div>Initializing...</div>
+          </div>
+        </section>
       </div>
     </div>
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="assets/vendors/vue.min.js"></script>
-    <!-- <script type="text/javascript" src="assets/js/app.js"></script> -->
-    <script type="text/javascript" src="http://192.168.1.11/mdisplay/mdisplay-launcher/www/assets/js/app.js"></script>
+    <script type="text/javascript" src="assets/vendors/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="assets/js/app.js"></script>
     <script type="text/javascript">
       window.app = new App();
       var hasCordova = !!window.cordova;
