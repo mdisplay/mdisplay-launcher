@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="app.mdisplay" version="1.2.0" versionCode="10" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+<widget id="app.mdisplay.launcher" version="1.2.0" versionCode="10" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <access origin="http://192.168.1.11" />
 
     <access origin="*" />
 
     <allow-navigation href="*" />
 
-    <name>MDisplay</name>
+    <name>MDisplay Launcher</name>
     <description>
-      MDisplay App
+      MDisplay Launcher App
     </description>
     <author email="safrazik@gmail.com" href="https://zetmel.com">
       Safraz Razik

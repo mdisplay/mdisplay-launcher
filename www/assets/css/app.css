@@ -16,6 +16,9 @@ body {
   /*background: green;*/
   /* color: #FFF; */
   text-align: center;
+
+  background: #000;
+  color: #eee;
 }
 
 #app {
@@ -40,7 +43,6 @@ body {
   padding: 2rem;
 }
 
-
 #app * {
   z-index: 10;
 }
@@ -64,9 +66,9 @@ body {
 }
 
 .settings .action button {
-  background: #64F;
-  border: 1px solid #64F;
-  color: #FFF;
+  background: #64f;
+  border: 1px solid #64f;
+  color: #fff;
   padding: 5px 15px;
   border-radius: 0;
   margin-bottom: 15px;
@@ -75,13 +77,13 @@ body {
 .settings .action button:focus,
 .settings .action button:active,
 .settings .action button:hover {
-  background: #42E;
-  outline: 1px solid #75F;
+  background: #42e;
+  outline: 1px solid #75f;
 }
 
 .settings .action button.secondary {
-  background: #AAA;
-  border: 1px solid #AAA;
+  background: #aaa;
+  border: 1px solid #aaa;
 }
 
 .settings .action button.secondary:focus,

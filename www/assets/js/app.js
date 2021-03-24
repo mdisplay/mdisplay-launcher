@@ -17,7 +17,7 @@ class App {
       editMode: false,
       waitingCount: 0,
     };
-    this.SETTINGS_STORAGE_KEY = 'mdisplay-app.settings';
+    this.SETTINGS_STORAGE_KEY = 'mdisplay-launcher.settings';
   }
 
   getExitCountDownMessage() {
