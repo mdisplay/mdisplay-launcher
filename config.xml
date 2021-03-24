@@ -1,19 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.zetmel.display" version="1.0.0" versionCode="10" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
-    <access origin="https://codepush.appcenter.ms" />
-    <access origin="https://codepush.blob.core.windows.net" />
-    <access origin="https://codepushupdates.azureedge.net" />
-    <access origin="https://zetmel.com" />
+<widget id="app.mdisplay" version="1.2.0" versionCode="10" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <access origin="http://192.168.1.11" />
 
     <access origin="*" />
 
     <allow-navigation href="*" />
 
-    <meta content="default-src https://codepush.appcenter.ms 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *" http-equiv="Content-Security-Policy" />
-    <name>Zet Display</name>
+    <name>MDisplay</name>
     <description>
-      Zetmel Display App
+      MDisplay App
     </description>
     <author email="safrazik@gmail.com" href="https://zetmel.com">
       Safraz Razik

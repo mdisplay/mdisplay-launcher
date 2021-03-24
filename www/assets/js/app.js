@@ -4,19 +4,20 @@ class App {
     this.pendingOpen = false;
     this.maxExitCount = 3;
     this.maxWaitingCount = 3;
-    this.inAppBrowserRef = undefined;
     this.urlEditable = true;
     this.kioskMode = true;
     this.data = {
       showIntroMessages: true,
-      url: '',
+      // url: 'https://mdisplay.github.io/live/',
+      url: 'http://192.168.1.11/mdisplay/live/',
       exitCount: 0,
-      version: '1.1.4',
+      version: '1.2.0',
       hello: 'World',
       initialized: false,
       editMode: false,
       waitingCount: 0,
     };
+    this.SETTINGS_STORAGE_KEY = 'mdisplay-app.settings';
   }
 
   getExitCountDownMessage() {
@@ -35,35 +36,40 @@ class App {
   writeSettings(settings) {
     let settingsNew = {
       url: this.data.url,
-      exitCount: this.data.exitCount,
+      // exitCount: this.data.exitCount,
     };
     if (settings) {
       settingsNew.url = settings.url;
-      settingsNew.exitCount = settings.exitCount;
+      // settingsNew.exitCount = settings.exitCount;
     }
-    localStorage.setItem('zetmel-kiosk.settings', JSON.stringify(settingsNew));
+    localStorage.setItem(this.SETTINGS_STORAGE_KEY, JSON.stringify(settingsNew));
+    // this.data.version = 'EXIT: ' + this.data.exitCount;
+    // this.data.version = 'EXIT: ' + localStorage.getItem(this.SETTINGS_STORAGE_KEY);
   }
 
-  readSettings() {
+  readSettings(initial) {
+    if (!initial) {
+      return;
+    }
     let settings = {
-      url: '',
-      exitCount: 0,
+      url: this.data.url,
+      // exitCount: 0,
     };
     let settingsAlready;
     try {
-      settingsAlready = JSON.parse(localStorage.getItem('zetmel-kiosk.settings'));
+      settingsAlready = JSON.parse(localStorage.getItem(this.SETTINGS_STORAGE_KEY));
     } catch (e) {}
     if (settingsAlready) {
       settings.url = settingsAlready.url;
-      settings.exitCount = settingsAlready.exitCount ? parseInt(settingsAlready.exitCount) : 0;
+      // settings.exitCount = settingsAlready.exitCount ? parseInt(settingsAlready.exitCount) : 0;
     }
     this.data.url = settings.url;
-    this.data.exitCount = settings.exitCount;
+    // this.data.exitCount = settings.exitCount;
     return settings;
   }
 
   initStorage(callback) {
-    this.readSettings();
+    this.readSettings(true);
     callback();
   }
 
@@ -132,57 +138,48 @@ class App {
   }
 
   doGoToUrl() {
+    if (this.data.editMode) {
+      return;
+    }
     if (typeof cordova === 'undefined') {
       if (confirm('Redirect to this URL in Cordova environment: \n"' + this.data.url + '" Simulate this behaviour?')) {
         window.location = this.data.url;
       }
       return;
     }
-    this.inAppBrowserRef = cordova.InAppBrowser.open(
+    // finally!
+    cordova.InAppBrowser.open(
       this.data.url,
-      '_blank',
-      'location=no,hardwareback=yes,footer=no,fullscreen=' + (this.kioskMode ? 'yes' : 'no')
+      '_self',
+      'location=no,hidenavigationbuttons=yes,hideurlbar=yes,hardwareback=yes,footer=no,fullscreen=' +
+        (this.kioskMode ? 'yes' : 'no')
     );
-    this.inAppBrowserRef.addEventListener('loadstop', () => {
-      // try {
-      //   window.AndroidFullScreen.immersiveMode(function () {
-      //     //
-      //   }, function () {
-      //     //
-      //   });
-      // } catch(e){
-      //   alert('hu: ' + e);
-      // }
-    });
-    this.inAppBrowserRef.addEventListener('exit', () => {
-      if (!this.urlEditable) {
-        setTimeout(() => {
-          this.doGoToUrl();
-        }, 1000);
-        return;
-      }
-      if (this.data.exitCount >= this.maxExitCount) {
-        this.data.exitCount = 0;
-        this.writeSettings();
-        this.incrementWaitingCount();
-        return;
-      }
-      this.readSettings();
-      this.data.exitCount = this.data.exitCount + 1;
-      this.writeSettings();
-      setTimeout(() => {
-        this.doGoToUrl();
-      }, 1000);
-      this.inAppBrowserRef = undefined;
-    });
+    //
   }
 
-  goToUrl() {
+  onInterruptKeyPressed() {
+    if (this.data.editMode) {
+      return;
+    }
+    clearTimeout(this.exitTimeoutRef);
+    if (this.data.exitCount >= this.maxExitCount) {
+      this.data.exitCount = 0;
+      this.incrementWaitingCount();
+      return;
+    }
+    this.data.exitCount = this.data.exitCount + 1;
+    this.exitTimeoutRef = setTimeout(() => {
+      this.goToUrl();
+    }, 3000);
+  }
+
+  goToUrl(initial) {
     // alert('goToUrl');
+    // if (initial) {
     this.data.exitCount = 0;
     this.data.waitingCount = 0;
     this.data.editMode = false;
-    this.writeSettings();
+    // }
     if (!this.isDeviceReady) {
       this.pendingOpen = true;
       return;
@@ -190,9 +187,18 @@ class App {
     this.doGoToUrl();
   }
 
+  urlChanged() {
+    this.writeSettings();
+  }
+
   goToUrlInit() {
     if (this.data.url != '' /*  && !this.data.exitCount */) {
-      this.goToUrl();
+      setTimeout(() => {
+        if (this.data.editMode || this.data.waitingCount > 0 || this.data.exitCount > 0) {
+          return;
+        }
+        this.goToUrl(true);
+      }, 2000);
     }
   }
 
@@ -201,7 +207,7 @@ class App {
       return;
     }
     this.data.url = '';
-    this.writeSettings();
+    this.urlChanged();
     if (input) {
       input.focus();
     }
@@ -231,23 +237,14 @@ class App {
         // alert('HA: ' + e);
       }
     }
-    // alert('babul 2');
     // window.askAndAutoUpdate();
     if (this.urlEditable) {
       document.addEventListener(
         'backbutton',
         (event) => {
           event.preventDefault();
-          if (this.data.editMode) {
-            this.readSettings();
-            if (this.data.url != '') {
-              this.goToUrl();
-            }
-          }
-          // if (this.data.settingsMode) {
-          //   //
-          // } else {
-          // }
+          event.stopPropagation();
+          this.onInterruptKeyPressed();
           return false;
         },
         false
@@ -257,11 +254,11 @@ class App {
 
   deviceReady() {
     this.isDeviceReady = true;
+    this.bindCordovaEvents();
     if (this.pendingOpen) {
       this.pendingOpen = false;
       this.doGoToUrl();
     }
-    this.bindCordovaEvents();
   }
 
   init(callback) {

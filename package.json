@@ -1,6 +1,6 @@
 {
-  "name": "zet-display",
-  "version": "1.1.4",
+  "name": "mdisplay-app",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "dependencies": {
@@ -24,14 +24,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zetmel/zet-display.git"
+    "url": "git+https://github.com/mdisplay/display-app.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/zetmel/zet-display/issues"
+    "url": "https://github.com/mdisplay/display-app/issues"
   },
-  "homepage": "https://github.com/zetmel/zet-display#readme",
+  "homepage": "https://github.com/mdisplay/display-app#readme",
   "cordova": {
     "plugins": {
       "cordova-plugin-whitelist": {},
