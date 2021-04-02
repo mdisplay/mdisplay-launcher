@@ -17,23 +17,48 @@ class App {
     this.data = {
       showIntroMessages: true,
       url: 'https://mdisplay.github.io/live/',
+      zipUrl: 'https://github.com/mdisplay/live/archive/refs/heads/master.zip',
+      zipDirectory: '/live-master',
       // url: 'http://192.168.1.11/mdisplay/live/',
+      zipFirst: true,
       exitCount: 0,
-      version: '1.2.0',
+      version: '1.3.0',
       hello: 'World',
       initialized: false,
       editMode: false,
       waitingCount: 0,
+      zipStatus: {
+        isActive: false,
+        progressComputable: false,
+        progressPercentage: 0,
+        progressCurrentSize: '0 KB',
+        progressTotalSize: 'Unknown',
+        isDownloading: false,
+        isDownloaded: false,
+        isError: false,
+        status: 'Unknown',
+      },
       network: {
         status: 'Unknown',
         checking: false,
-        checkingMessage: {
+        internetChecking: false,
+        internetCheckingMessage: {
           color: '',
           text: '',
         },
       },
     };
     this.SETTINGS_STORAGE_KEY = 'mdisplay-launcher.settings';
+  }
+
+  getSizeFormatted(bytes) {
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) {
+      return '0 B';
+    }
+    let i = Math.floor(Math.log(bytes) / Math.log(1024));
+    i = parseInt('' + i, 10);
+    return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
   }
 
   checkNetworkStatus() {
@@ -43,16 +68,27 @@ class App {
     var networkState = navigator.connection.type;
 
     var states = {};
-    states[Connection.UNKNOWN] = 'Unknown connection';
-    states[Connection.ETHERNET] = 'Ethernet connection';
-    states[Connection.WIFI] = 'WiFi connection';
-    states[Connection.CELL_2G] = 'Cell 2G connection';
-    states[Connection.CELL_3G] = 'Cell 3G connection';
-    states[Connection.CELL_4G] = 'Cell 4G connection';
-    states[Connection.CELL] = 'Cell generic connection';
-    states[Connection.NONE] = 'No network connection';
+    states[Connection.UNKNOWN] = 'Unknown Connection';
+    states[Connection.ETHERNET] = 'Ethernet Connection';
+    states[Connection.WIFI] = 'WiFi Connection';
+    states[Connection.CELL_2G] = 'Cell 2G Connection';
+    states[Connection.CELL_3G] = 'Cell 3G Connection';
+    states[Connection.CELL_4G] = 'Cell 4G Connection';
+    states[Connection.CELL] = 'Cell Generic Connection';
+    states[Connection.NONE] = 'No Network Connection';
 
-    this.data.network.status = states[networkState];
+    this.data.network.status = states[networkState] + ssid;
+    if (networkState == Connection.WIFI) {
+      var ssid = '';
+      WifiWizard2.getConnectedSSID().then(
+        (ssid) => {
+          this.data.network.status = states[Connection.WIFI] + ' (' + ssid + ')';
+        },
+        (err) => {
+          this.data.network.status = states[Connection.WIFI] + ' (SSID: ' + err + ')';
+        }
+      );
+    }
 
     // alert('Connection type: ' + states[networkState]);
   }
@@ -73,10 +109,16 @@ class App {
   writeSettings(settings) {
     let settingsNew = {
       url: this.data.url,
+      zipUrl: this.data.zipUrl,
+      zipDirectory: this.data.zipDirectory,
+      zipFirst: this.data.zipFirst,
       // exitCount: this.data.exitCount,
     };
     if (settings) {
       settingsNew.url = settings.url;
+      settingsNew.zipUrl = settings.zipUrl;
+      settingsNew.zipDirectory = settings.zipDirectory;
+      settingsNew.zipFirst = settings.zipFirst;
       // settingsNew.exitCount = settings.exitCount;
     }
     localStorage.setItem(this.SETTINGS_STORAGE_KEY, JSON.stringify(settingsNew));
@@ -90,6 +132,9 @@ class App {
     }
     let settings = {
       url: this.data.url,
+      zipUrl: this.data.zipUrl,
+      zipDirectory: this.data.zipDirectory,
+      zipFirst: this.data.zipFirst,
       // exitCount: 0,
     };
     let settingsAlready;
@@ -99,8 +144,20 @@ class App {
     if (settingsAlready) {
       settings.url = settingsAlready.url;
       // settings.exitCount = settingsAlready.exitCount ? parseInt(settingsAlready.exitCount) : 0;
+      if (settingsAlready.zipUrl) {
+        settings.zipUrl = settingsAlready.zipUrl;
+      }
+      if (settingsAlready.zipDirectory) {
+        settings.zipDirectory = settingsAlready.zipDirectory;
+      }
+      if (settingsAlready.zipFirst !== undefined) {
+        settings.zipFirst = settingsAlready.zipFirst;
+      }
     }
     this.data.url = settings.url;
+    this.data.zipUrl = settings.zipUrl;
+    this.data.zipDirectory = settings.zipDirectory;
+    this.data.zipFirst = settings.zipFirst;
     // this.data.exitCount = settings.exitCount;
     return settings;
   }
@@ -179,11 +236,13 @@ class App {
       init: '#ffff20',
       error: '#ff1919',
       success: '#49ff50',
+      localInit: '#eeff43',
+      local: '#17abff',
     };
     setTimeout(
       () => {
-        this.data.network.checkingMessage.text = message;
-        this.data.network.checkingMessage.color = colors[mode];
+        this.data.network.internetCheckingMessage.text = message;
+        this.data.network.internetCheckingMessage.color = colors[mode];
       },
       timeout ? 500 : 0
     );
@@ -195,11 +254,11 @@ class App {
 
   checkInternetAvailability(okCallback) {
     if (this.data.editMode || this.data.waitingCount > 0 || this.data.exitCount > 0) {
-      this.data.network.checking = false;
+      this.data.network.internetChecking = false;
       return;
     }
     this.checkNetworkStatus();
-    this.data.network.checking = true;
+    this.data.network.internetChecking = true;
     let url;
     url = 'http://192.168.1.11/qurapp/qurapp/public/api/time';
     url = 'http://192.168.1.11/non';
@@ -226,7 +285,7 @@ class App {
             this.setNetworkCheckingStatus('Internet Connection OK ', 'success', false, 1);
             setTimeout(() => {
               okCallback();
-              this.network.checking = false;
+              // this.data.network.checking = false;
             }, 1500);
             return;
           }
@@ -254,7 +313,7 @@ class App {
         this.setNetworkCheckingStatus('Internet Connection OK ', 'success', false, 1);
         setTimeout(() => {
           okCallback();
-          this.network.checking = false;
+          // this.data.network.internetChecking = false;
         }, 1500);
       },
       (err) => {
@@ -266,7 +325,7 @@ class App {
     );
   }
 
-  doGoToUrl() {
+  doGoToUrl(url, checkInternet) {
     if (this.data.editMode) {
       return;
     }
@@ -276,10 +335,13 @@ class App {
       }
       return;
     }
-    this.checkInternetAvailability(() => {
+    var noCheck = (callback) => {
+      callback();
+    };
+    (checkInternet ? this.checkInternetAvailability : noCheck)(() => {
       // finally!
       cordova.InAppBrowser.open(
-        this.data.url,
+        url || this.data.url,
         '_self',
         'location=no,hidenavigationbuttons=yes,hideurlbar=yes,hardwareback=yes,footer=no,fullscreen=' +
           (this.kioskMode ? 'yes' : 'no')
@@ -318,19 +380,263 @@ class App {
     this.doGoToUrl();
   }
 
+  getAppDirectoryEntry(callback, errCallback) {
+    // if (true) {
+    //   return this.getDirectoryEntry('app', callback, errCallback, false, cordova.file.applicationDirectory + '/www');
+    // }
+    return this.getDirectoryEntry('app' + this.data.zipDirectory, callback, errCallback);
+  }
+
+  getDirectoryEntry(dirName, callback, errCallback, doCreate, base) {
+    resolveLocalFileSystemURL(
+      base || cordova.file.dataDirectory,
+      (dataDir) => {
+        dataDir.getDirectory(
+          dirName,
+          { create: doCreate !== false },
+          (dirEntry) => {
+            callback(dirEntry);
+          },
+          (err) => {
+            errCallback('Could not get/create directory: ' + dirName);
+          }
+        );
+      },
+      (err) => {
+        errCallback('Could not resolve data directory for:' + dirName);
+      }
+    );
+  }
+
+  extractZipEntry(fileEntry) {
+    this.data.zipStatus.status = 'Extracting zip...';
+    this.getAppDirectoryEntry(
+      (dirEntry) => {
+        zip.unzip(
+          fileEntry.toURL(),
+          dirEntry.toURL(),
+          (err) => {
+            if (err) {
+              alert('Failed to extract zip');
+              return;
+            }
+            setTimeout(() => {
+              this.data.zipStatus.isDownloading = false;
+              this.data.zipStatus.isDownloaded = false;
+              this.data.zipStatus.isError = false;
+              this.initializeApp();
+            }, 1000);
+            //
+          },
+          (progressEvent) => {
+            var progressPercentage = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            this.data.zipStatus.status = 'Extracting zip... (' + progressPercentage + '%)';
+            //
+          }
+        );
+      },
+      (err) => {
+        alert('Could not extract zip (ERROR:44:App Directory Entry Failed)');
+      }
+    );
+    // this.getDirectoryEntry(
+    //   'zip',
+    //   (dirEntry) => {
+    //     entry.copyTo(
+    //       dirEntry,
+    //       'app.zip',
+    //       () => {
+    //         alert('copying was successful');
+    //       },
+    //       () => {
+    //         alert('copying FAILED');
+    //       }
+    //     );
+    //   },
+    //   (err) => {
+    //     alert('Could not create zip directory');
+    //   }
+    // );
+  }
+
+  doDownloadZipFile(fileEntry) {
+    var fileTransfer = new FileTransfer();
+    var fileURL = fileEntry.toURL();
+    var uri = encodeURI(this.data.zipUrl);
+
+    this.data.zipStatus.isActive = true;
+    this.data.zipStatus.progressComputable = false;
+    this.data.zipStatus.progressPercentage = 0;
+    this.data.zipStatus.progressCurrentSize = '0 KB';
+    this.data.zipStatus.progressTotalSize = 'Unknown';
+    this.data.zipStatus.isDownloading = true;
+    this.data.zipStatus.isDownloaded = false;
+    this.data.zipStatus.isError = false;
+    this.data.zipStatus.status = 'Unknown';
+
+    fileTransfer.onprogress = (progressEvent) => {
+      this.data.zipStatus.progressComputable = progressEvent.lengthComputable;
+      this.data.zipStatus.progressCurrentSize = this.getSizeFormatted(progressEvent.loaded);
+      if (progressEvent.lengthComputable) {
+        // Calculate the percentage
+        const percentCompleted = (progressEvent.loaded * 100) / progressEvent.total;
+        this.data.zipStatus.progressPercentage = Math.round(percentCompleted);
+        this.data.zipStatus.progressTotalSize = this.getSizeFormatted(progressEvent.total);
+      } else {
+        var halfSizeEstimated = 0.5 * 1024 * 1024;
+        if (progressEvent.loaded < halfSizeEstimated) {
+          const percentCompleted = (progressEvent.loaded * 100) / halfSizeEstimated;
+          this.data.zipStatus.progressPercentage = Math.round(percentCompleted / 2);
+        } else {
+          var newPercent = this.data.zipStatus.progressPercentage + 1;
+          if (newPercent > 99) {
+            newPercent = 99;
+          }
+          this.data.zipStatus.progressPercentage = Math.round(newPercent);
+        }
+      }
+
+      // Display percentage in the UI
+      // console.log('download progress', progressEvent);
+    };
+
+    fileTransfer.download(
+      uri,
+      fileURL,
+      (entry) => {
+        console.log('download complete: ' + entry.toURL());
+        this.data.zipStatus.isDownloading = false;
+        this.data.zipStatus.isDownloaded = true;
+        this.data.zipStatus.progressPercentage = 100;
+        this.data.zipStatus.status = 'Zip file downloaded';
+        setTimeout(() => {
+          this.extractZipEntry(entry);
+        }, 1000);
+      },
+      (error) => {
+        console.log('download error source ' + error.source);
+        console.log('download error target ' + error.target);
+        console.log('download error code' + error.code);
+        this.data.zipStatus.isDownloading = false;
+        this.data.zipStatus.isError = true;
+        this.data.zipStatus.status = error.exception + '. Retrying...';
+        setTimeout(() => {
+          this.doDownloadZipFile(fileEntry);
+        }, 3000);
+      },
+      false,
+      {
+        headers: {
+          // Authorization: 'Basic dGVzdHVzZXJuYW1lOnRlc3RwYXNzd29yZA==',
+        },
+      }
+    );
+  }
+
+  downloadZipUrl(initial) {
+    this.data.exitCount = 0;
+    this.data.waitingCount = 0;
+    this.data.editMode = false;
+
+    this.checkInternetAvailability(() => {
+      window.requestFileSystem(
+        window.TEMPORARY,
+        5 * 1024 * 1024,
+        (fs) => {
+          console.log('file system open: ' + fs.name);
+
+          var dirEntry = fs.root;
+
+          dirEntry.getFile(
+            'app.zip',
+            { create: true, exclusive: false },
+            (fileEntry) => {
+              // download(fileEntry, url, true);
+              this.doDownloadZipFile(fileEntry);
+            },
+            (err) => {
+              alert('Temporary file could not be created: ' + err);
+              console.log(err);
+            }
+          );
+        },
+        (err) => {
+          alert('Temporary File System could not be loaded: ' + err);
+          console.log(err);
+        }
+      );
+    });
+  }
+
   urlChanged() {
     this.writeSettings();
   }
 
-  goToUrlInit() {
-    if (this.data.url != '' /*  && !this.data.exitCount */) {
-      setTimeout(() => {
-        if (this.data.editMode || this.data.waitingCount > 0 || this.data.exitCount > 0) {
-          return;
-        }
+  zipUrlChanged() {
+    this.writeSettings();
+  }
+
+  zipFirstChanged() {
+    this.writeSettings();
+  }
+
+  initializeZipFirst() {
+    this.data.network.internetChecking = true;
+    this.setNetworkCheckingStatus('Checking Local Availability...', 'localInit', true);
+    this.getAppDirectoryEntry(
+      (dirEntry) => {
+        dirEntry.getFile(
+          'index.html',
+          { create: false },
+          (entry) => {
+            // temp
+            // this.data.url = entry.toURL();
+            this.setNetworkCheckingStatus('OK. Local copy available.', 'local', true, 999);
+            setTimeout(() => {
+              this.doGoToUrl(entry.toURL(), false);
+            }, 1500);
+            console.log('success what?', entry.toURL(), entry);
+          },
+          (err) => {
+            this.setNetworkCheckingStatus('Local copy unavailable.', 'error', true, 999);
+            setTimeout(() => {
+              this.downloadZipUrl();
+            }, 1500);
+            console.log('error yes?', err);
+          }
+        );
+        console.log('getAppDirectoryEntry', dirEntry);
+      },
+      (err) => {
+        alert('Unexped IO Error: 3');
+        console.log('NOOOOOO getAppDirectoryEntry', err);
+      }
+    );
+  }
+
+  initializeApp() {
+    setTimeout(() => {
+      this.data.network.checking = true;
+      this.checkNetworkStatus();
+    }, 1500);
+
+    setTimeout(() => {
+      if (this.data.editMode || this.data.waitingCount > 0 || this.data.exitCount > 0) {
+        return;
+      }
+      if (this.data.zipFirst && this.data.zipUrl != '') {
+        this.initializeZipFirst();
+        return;
+      }
+      if (this.data.url != '' /*  && !this.data.exitCount */) {
+        // setTimeout(() => {
+        //   if (this.data.editMode || this.data.waitingCount > 0 || this.data.exitCount > 0) {
+        //     return;
+        //   }
         this.goToUrl(true);
-      }, 2000);
-    }
+        // }, 2000);
+      }
+    }, 2000);
   }
 
   clearUrl(input) {
@@ -339,6 +645,18 @@ class App {
     }
     this.data.url = '';
     this.urlChanged();
+    if (input) {
+      input.focus();
+    }
+  }
+
+  clearZipUrl(input) {
+    if (!confirm('Are you sure to clear Zip URL?')) {
+      return;
+    }
+    this.data.zipUrl = '';
+    this.data.zipDirectory = '';
+    this.zipUrlChanged();
     if (input) {
       input.focus();
     }
@@ -357,10 +675,10 @@ class App {
     if (this.kioskMode) {
       try {
         window.AndroidFullScreen.immersiveMode(
-          function () {
+          () => {
             //
           },
-          function () {
+          () => {
             //
           }
         );
@@ -384,6 +702,17 @@ class App {
   }
 
   deviceReady() {
+    console.log('cordova: ' + typeof cordova);
+    if (typeof cordova === 'undefined') {
+      return;
+    }
+    console.log('FileTransfer: ' + typeof FileTransfer);
+    console.log('zip: ' + typeof zip);
+    console.log('cordova.file: ' + typeof cordova.file);
+    console.log('navigator.connection: ' + typeof navigator.connection);
+    console.log('Connection: ' + typeof Connection);
+    console.log('WifiWizard2: ' + typeof WifiWizard2);
+    console.log('cordova.file.dataDirectory: ' + cordova.file.dataDirectory);
     this.isDeviceReady = true;
     this.bindCordovaEvents();
     if (this.pendingOpen) {
@@ -392,12 +721,25 @@ class App {
     }
   }
 
+  ensureDeviceReady(callback) {
+    if (this.isDeviceReady) {
+      callback();
+      return;
+    }
+    console.log('will ensure..');
+    setTimeout(() => {
+      this.ensureDeviceReady(callback);
+    }, 500);
+  }
+
   init(callback) {
     this.initStorage(() => {
       if (this.data.url == '') {
         this.data.editMode = true;
       }
-      this.goToUrlInit();
+      this.ensureDeviceReady(() => {
+        this.initializeApp();
+      });
       if (callback) {
         callback();
       }

@@ -12,11 +12,33 @@
   <body>
     <div id="app" :class="[]" @click="onBodyClick()">
       <div style="display: none" v-show="true">
-        <section v-if="network.checking && !editMode && !waitingCount && !exitCount">
-          <h3 style="margin-top: 50px">Network Status: {{ network.status }}</h3>
-          <h3 v-if="network.checking" :style="{color: network.checkingMessage.color}">
-            {{ network.checkingMessage.text }}
+        <section v-if="(network.checking || network.internetChecking) && !editMode && !waitingCount && !exitCount">
+          <h3 style="margin-top: 50px">
+            <small style="font-weight: normal; font-size: 12px; display: block">Network Status:</small>
+            {{ network.status }}
           </h3>
+          <h3 v-if="network.internetChecking" :style="{color: network.internetCheckingMessage.color}">
+            {{ network.internetCheckingMessage.text }}
+          </h3>
+
+          <div style="padding: 10px 0">
+            <div v-if="zipStatus.isDownloaded || zipStatus.isError">
+              <div style="font-size: 18px" :style="{color: zipStatus.isDownloaded ? '#31da31' : '#ff2e2e'}">
+                {{ zipStatus.status }}
+              </div>
+            </div>
+            <div v-if="zipStatus.isDownloading">
+              Downloading zip file...
+              <div class="progress-bar">
+                <span class="progress-bar-fill" :style="{width: zipStatus.progressPercentage + '%'}"></span>
+              </div>
+              <div>
+                Downloaded {{ zipStatus.progressCurrentSize}}
+                <span v-if="zipStatus.progressTotalSize != 'Unknown'">/ {{ zipStatus.progressTotalSize }}</span>
+              </div>
+            </div>
+            <!-- <pre>{{ zipStatus }}</pre> -->
+          </div>
           <!-- <pre>
             {{ network }}
           </pre> -->
@@ -26,6 +48,7 @@
             <h3>MDisplay Launcher {{ version }}</h3>
             <!-- <p>Powered by Zetmel</p> -->
             <div class="settings">
+              <label style="display: block; text-align: left">URL</label>
               <div class="input">
                 <input ref="urlInput" type="url" v-model="url" @input="urlChanged()" placeholder="Enter the URL" />
               </div>
@@ -33,6 +56,36 @@
                 <button :style="{opacity: url == '' ? '0.5' : '1'}" @click="goToUrl()">Go</button>
                 <button class="secondary" @click="clearUrl()">Clear</button>
               </div>
+            </div>
+            <div class="settings">
+              <label style="display: block; text-align: left">Zip URL</label>
+              <div class="input">
+                <input
+                  ref="zipUrlInput"
+                  type="url"
+                  v-model="zipUrl"
+                  @input="zipUrlChanged()"
+                  placeholder="Enter the Zip URL"
+                />
+              </div>
+              <label style="display: block; text-align: left">Zip Directory</label>
+              <div class="input">
+                <input
+                  ref="zipDirectoryInput"
+                  type="url"
+                  v-model="zipDirectory"
+                  @input="zipUrlChanged()"
+                  placeholder="Enter the Zip Directory"
+                />
+              </div>
+              <div class="action">
+                <button :style="{opacity: zipUrl == '' ? '0.5' : '1'}" @click="downloadZipUrl()">Download</button>
+                <button class="secondary" @click="clearZipUrl()">Clear</button>
+              </div>
+            </div>
+            <div class="settings">
+              <input type="checkbox" v-model="zipFirst" id="zip-first-check" @change="zipFirstChanged()" />
+              <label for="zip-first-check">Offline (Zip) First</label>
             </div>
           </div>
           <div v-if="url != '' && waitingCount">
@@ -84,12 +137,25 @@
             goToUrl() {
               window.app.goToUrl();
             },
+            downloadZipUrl() {
+              window.app.downloadZipUrl();
+            },
             urlChanged() {
               window.app.urlChanged();
+            },
+            zipUrlChanged() {
+              window.app.zipUrlChanged();
+            },
+            zipFirstChanged() {
+              window.app.zipFirstChanged();
             },
             clearUrl() {
               var input = this.$refs.urlInput;
               window.app.clearUrl(input);
+            },
+            clearZipUrl() {
+              var input = this.$refs.zipUrlInput;
+              window.app.clearZipUrl(input);
             },
             getExitCountDownMessage() {
               return window.app.getExitCountDownMessage();
