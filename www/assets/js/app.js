@@ -18,11 +18,11 @@ class App {
       showIntroMessages: true,
       url: 'https://mdisplay.github.io/live/',
       zipUrl: 'https://github.com/mdisplay/live/archive/refs/heads/master.zip',
-      zipDirectory: '/live-master',
+      zipDirectory: 'live-master',
       // url: 'http://192.168.1.11/mdisplay/live/',
       zipFirst: true,
       exitCount: 0,
-      version: '1.3.0',
+      version: '1.3.2', // patch
       hello: 'World',
       initialized: false,
       editMode: false,
@@ -142,12 +142,14 @@ class App {
       settingsAlready = JSON.parse(localStorage.getItem(this.SETTINGS_STORAGE_KEY));
     } catch (e) {}
     if (settingsAlready) {
-      settings.url = settingsAlready.url;
+      if (settingsAlready.url && settingsAlready.url != '') {
+        settings.url = settingsAlready.url;
+      }
       // settings.exitCount = settingsAlready.exitCount ? parseInt(settingsAlready.exitCount) : 0;
-      if (settingsAlready.zipUrl) {
+      if (settingsAlready.zipUrl && settingsAlready.zipUrl != '') {
         settings.zipUrl = settingsAlready.zipUrl;
       }
-      if (settingsAlready.zipDirectory) {
+      if (settingsAlready.zipDirectory && settingsAlready.zipDirectory != '') {
         settings.zipDirectory = settingsAlready.zipDirectory;
       }
       if (settingsAlready.zipFirst !== undefined) {
@@ -380,11 +382,31 @@ class App {
     this.doGoToUrl();
   }
 
+  getZipDirectoryEntry(callback, errCallback) {
+    if (this.data.zipDirectory && this.data.zipDirectory != '') {
+      this.getAppDirectoryEntry((dirEntry) => {
+        dirEntry.getDirectory(
+          this.data.zipDirectory,
+          { create: false },
+          (dirEntry) => {
+            callback(dirEntry);
+          },
+          (err) => {
+            errCallback('Could not get zipDirectory: ' + this.data.zipDirectory);
+          }
+        );
+      }, errCallback);
+      return;
+    }
+    return this.getAppDirectoryEntry(callback, errCallback);
+  }
+
   getAppDirectoryEntry(callback, errCallback) {
     // if (true) {
     //   return this.getDirectoryEntry('app', callback, errCallback, false, cordova.file.applicationDirectory + '/www');
     // }
-    return this.getDirectoryEntry('app' + this.data.zipDirectory, callback, errCallback);
+
+    this.getDirectoryEntry('app', callback, errCallback);
   }
 
   getDirectoryEntry(dirName, callback, errCallback, doCreate, base) {
@@ -393,7 +415,7 @@ class App {
       (dataDir) => {
         dataDir.getDirectory(
           dirName,
-          { create: doCreate !== false },
+          { create: doCreate !== false, exclusive: false },
           (dirEntry) => {
             callback(dirEntry);
           },
@@ -404,6 +426,24 @@ class App {
       },
       (err) => {
         errCallback('Could not resolve data directory for:' + dirName);
+      }
+    );
+  }
+
+  deleteExisting(okCallback, errCallback) {
+    this.getAppDirectoryEntry(
+      (dirEntry) => {
+        dirEntry.removeRecursively(
+          () => {
+            okCallback();
+          },
+          (err) => {
+            errCallback(err);
+          }
+        );
+      },
+      (err) => {
+        errCallback(err);
       }
     );
   }
@@ -510,7 +550,19 @@ class App {
         this.data.zipStatus.progressPercentage = 100;
         this.data.zipStatus.status = 'Zip file downloaded';
         setTimeout(() => {
-          this.extractZipEntry(entry);
+          this.data.zipStatus.status = 'Deleting existing files...';
+          setTimeout(() => {
+            this.deleteExisting(
+              () => {
+                console.log('deleteExisting successfull!');
+                this.extractZipEntry(entry);
+              },
+              (err) => {
+                console.log('deleteExisting failed. Extracting anyway!', err);
+                this.extractZipEntry(entry);
+              }
+            );
+          }, 1000);
         }, 1000);
       },
       (error) => {
@@ -583,7 +635,13 @@ class App {
   initializeZipFirst() {
     this.data.network.internetChecking = true;
     this.setNetworkCheckingStatus('Checking Local Availability...', 'localInit', true);
-    this.getAppDirectoryEntry(
+    var localCopyNotAvailable = () => {
+      this.setNetworkCheckingStatus('Local copy unavailable.', 'error', true, 999);
+      setTimeout(() => {
+        this.downloadZipUrl();
+      }, 1500);
+    };
+    this.getZipDirectoryEntry(
       (dirEntry) => {
         dirEntry.getFile(
           'index.html',
@@ -598,17 +656,15 @@ class App {
             console.log('success what?', entry.toURL(), entry);
           },
           (err) => {
-            this.setNetworkCheckingStatus('Local copy unavailable.', 'error', true, 999);
-            setTimeout(() => {
-              this.downloadZipUrl();
-            }, 1500);
+            localCopyNotAvailable();
             console.log('error yes?', err);
           }
         );
         console.log('getAppDirectoryEntry', dirEntry);
       },
       (err) => {
-        alert('Unexped IO Error: 3');
+        localCopyNotAvailable();
+        // alert('Unexpected IO Error:34:getAppDirectoryEntry failed');
         console.log('NOOOOOO getAppDirectoryEntry', err);
       }
     );
@@ -734,8 +790,10 @@ class App {
 
   init(callback) {
     this.initStorage(() => {
-      if (this.data.url == '') {
+      if ((!this.data.zipFirst && this.data.url == '') || (this.data.zipFirst && this.data.zipUrl == '')) {
         this.data.editMode = true;
+      } else {
+        this.data.editMode = false;
       }
       this.ensureDeviceReady(() => {
         this.initializeApp();
