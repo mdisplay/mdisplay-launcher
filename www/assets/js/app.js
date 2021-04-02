@@ -77,9 +77,8 @@ class App {
     states[Connection.CELL] = 'Cell Generic Connection';
     states[Connection.NONE] = 'No Network Connection';
 
-    this.data.network.status = states[networkState] + ssid;
+    this.data.network.status = states[networkState];
     if (networkState == Connection.WIFI) {
-      var ssid = '';
       WifiWizard2.getConnectedSSID().then(
         (ssid) => {
           this.data.network.status = states[Connection.WIFI] + ' (' + ssid + ')';
