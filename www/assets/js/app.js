@@ -22,7 +22,7 @@ class App {
       // url: 'http://192.168.1.11/mdisplay/live/',
       zipFirst: true,
       exitCount: 0,
-      version: '1.3.2', // patch
+      version: '1.3.3', // patch
       hello: 'World',
       initialized: false,
       editMode: false,
