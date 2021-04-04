@@ -21,12 +21,18 @@ class App {
       zipDirectory: 'live-master',
       // url: 'http://192.168.1.11/mdisplay/live/',
       zipFirst: true,
+      zipCheckInternet: false,
       exitCount: 0,
-      version: '1.3.3', // patch
+      version: '1.4.2', // patch
       hello: 'World',
       initialized: false,
       editMode: false,
       waitingCount: 0,
+      debug: {
+        active: false,
+        // active: true,
+        editMode: true,
+      },
       zipStatus: {
         isActive: false,
         progressComputable: false,
@@ -78,7 +84,7 @@ class App {
     states[Connection.NONE] = 'No Network Connection';
 
     this.data.network.status = states[networkState];
-    if (networkState == Connection.WIFI) {
+    if (networkState == Connection.WIFI && typeof WifiWizard2 !== 'undefined') {
       WifiWizard2.getConnectedSSID().then(
         (ssid) => {
           this.data.network.status = states[Connection.WIFI] + ' (' + ssid + ')';
@@ -111,6 +117,7 @@ class App {
       zipUrl: this.data.zipUrl,
       zipDirectory: this.data.zipDirectory,
       zipFirst: this.data.zipFirst,
+      zipCheckInternet: this.data.zipCheckInternet,
       // exitCount: this.data.exitCount,
     };
     if (settings) {
@@ -118,6 +125,7 @@ class App {
       settingsNew.zipUrl = settings.zipUrl;
       settingsNew.zipDirectory = settings.zipDirectory;
       settingsNew.zipFirst = settings.zipFirst;
+      settingsNew.zipCheckInternet = settings.zipCheckInternet;
       // settingsNew.exitCount = settings.exitCount;
     }
     localStorage.setItem(this.SETTINGS_STORAGE_KEY, JSON.stringify(settingsNew));
@@ -134,6 +142,7 @@ class App {
       zipUrl: this.data.zipUrl,
       zipDirectory: this.data.zipDirectory,
       zipFirst: this.data.zipFirst,
+      zipCheckInternet: this.data.zipCheckInternet,
       // exitCount: 0,
     };
     let settingsAlready;
@@ -154,11 +163,15 @@ class App {
       if (settingsAlready.zipFirst !== undefined) {
         settings.zipFirst = settingsAlready.zipFirst;
       }
+      if (settingsAlready.zipCheckInternet !== undefined) {
+        settings.zipCheckInternet = settingsAlready.zipCheckInternet;
+      }
     }
     this.data.url = settings.url;
     this.data.zipUrl = settings.zipUrl;
     this.data.zipDirectory = settings.zipDirectory;
     this.data.zipFirst = settings.zipFirst;
+    this.data.zipCheckInternet = settings.zipCheckInternet;
     // this.data.exitCount = settings.exitCount;
     return settings;
   }
@@ -336,10 +349,14 @@ class App {
       }
       return;
     }
-    var noCheck = (callback) => {
-      callback();
+    var checkInternetAvailability = (callback) => {
+      if (checkInternet === false) {
+        callback();
+        return;
+      }
+      this.checkInternetAvailability(callback);
     };
-    (checkInternet ? this.checkInternetAvailability : noCheck)(() => {
+    checkInternetAvailability(() => {
       // finally!
       cordova.InAppBrowser.open(
         url || this.data.url,
@@ -631,6 +648,10 @@ class App {
     this.writeSettings();
   }
 
+  zipCheckInternetChanged() {
+    this.writeSettings();
+  }
+
   initializeZipFirst() {
     this.data.network.internetChecking = true;
     this.setNetworkCheckingStatus('Checking Local Availability...', 'localInit', true);
@@ -650,7 +671,7 @@ class App {
             // this.data.url = entry.toURL();
             this.setNetworkCheckingStatus('OK. Local copy available.', 'local', true, 999);
             setTimeout(() => {
-              this.doGoToUrl(entry.toURL(), false);
+              this.doGoToUrl(entry.toURL(), this.data.zipCheckInternet);
             }, 1500);
             console.log('success what?', entry.toURL(), entry);
           },
