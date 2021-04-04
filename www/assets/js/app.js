@@ -23,7 +23,7 @@ class App {
       zipFirst: true,
       zipCheckInternet: false,
       exitCount: 0,
-      version: '1.4.2', // patch
+      version: '1.4.4', // patch
       hello: 'World',
       initialized: false,
       editMode: false,
@@ -539,9 +539,9 @@ class App {
         this.data.zipStatus.progressPercentage = Math.round(percentCompleted);
         this.data.zipStatus.progressTotalSize = this.getSizeFormatted(progressEvent.total);
       } else {
-        var halfSizeEstimated = 0.5 * 1024 * 1024;
-        if (progressEvent.loaded < halfSizeEstimated) {
-          const percentCompleted = (progressEvent.loaded * 100) / halfSizeEstimated;
+        var sizeEstimated = 1 * 1024 * 1024; // 1 MB
+        if (progressEvent.loaded < sizeEstimated) {
+          const percentCompleted = (progressEvent.loaded * 100) / sizeEstimated;
           this.data.zipStatus.progressPercentage = Math.round(percentCompleted / 2);
         } else {
           var newPercent = this.data.zipStatus.progressPercentage + 1;
@@ -585,9 +585,11 @@ class App {
         console.log('download error source ' + error.source);
         console.log('download error target ' + error.target);
         console.log('download error code' + error.code);
+        console.log('download error', error);
         this.data.zipStatus.isDownloading = false;
         this.data.zipStatus.isError = true;
-        this.data.zipStatus.status = error.exception + '. Retrying...';
+        this.data.zipStatus.status =
+          error.exception + '. (Check the device time and internet connectivity) Retrying...';
         setTimeout(() => {
           this.doDownloadZipFile(fileEntry);
         }, 3000);
