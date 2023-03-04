@@ -11,6 +11,7 @@
   </head>
   <body>
     <div id="app" :class="[]" @click="onBodyClick()">
+      <div v-show="false">Rendering App...</div>
       <div style="display: none" v-show="true">
         <section
           v-if="!(debug.active && debug.editMode) && (network.checking || network.internetChecking) && !editMode && !waitingCount && !exitCount"
@@ -127,8 +128,6 @@
     <script type="text/javascript">
       window.app = new App();
       var hasCordova = !!window.cordova;
-    </script>
-    <script type="text/javascript">
       if (hasCordova) {
         document.addEventListener('deviceready', function () {
           window.app.deviceReady();
@@ -137,62 +136,61 @@
         window.app.deviceReady();
         //   alert('Not intended to run in a non-cordova environment');
       }
-    </script>
-    <script type="text/javascript">
+
       window.app.init(function () {
         new Vue({
           el: '#app',
           data: app.data,
           computed: {},
           methods: {
-            onBodyClick() {
+            onBodyClick: function onBodyClick() {
               window.app.onBodyClick();
             },
-            goToUrl() {
+            goToUrl: function goToUrl() {
               window.app.goToUrl();
             },
-            initializeApp() {
+            initializeApp: function initializeApp() {
               window.app.initializeApp();
             },
-            reloadApp() {
+            reloadApp: function reloadApp() {
               window.location.reload();
             },
-            downloadZipUrl() {
+            downloadZipUrl: function downloadZipUrl() {
               window.app.downloadZipUrl();
             },
-            urlChanged() {
+            urlChanged: function urlChanged() {
               window.app.urlChanged();
             },
-            zipUrlChanged() {
+            zipUrlChanged: function zipUrlChanged() {
               window.app.zipUrlChanged();
             },
-            zipFirstChanged() {
+            zipFirstChanged: function zipFirstChanged() {
               window.app.zipFirstChanged();
             },
-            zipCheckInternetChanged() {
+            zipCheckInternetChanged: function zipCheckInternetChanged() {
               window.app.zipCheckInternetChanged();
             },
-            clearUrl() {
+            clearUrl: function clearUrl() {
               var input = this.$refs.urlInput;
               window.app.clearUrl(input);
             },
-            clearZipUrl() {
+            clearZipUrl: function clearZipUrl() {
               var input = this.$refs.zipUrlInput;
               window.app.clearZipUrl(input);
             },
-            getExitCountDownMessage() {
+            getExitCountDownMessage: function getExitCountDownMessage() {
               return window.app.getExitCountDownMessage();
             },
-            getWaitingCountDownMessage() {
+            getWaitingCountDownMessage: function getWaitingCountDownMessage() {
               return window.app.getWaitingCountDownMessage();
-            },
+            }
           },
-          created() {
+          created: function created() {
             app.created();
           },
-          mounted() {
+          mounted: function mounted() {
             app.mounted();
-          },
+          }
         });
       });
     </script>
