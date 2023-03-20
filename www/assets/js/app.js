@@ -16,14 +16,14 @@ var App = /*#__PURE__*/function () {
 
     this.data = {
       showIntroMessages: true,
-      url: 'https://mdisplay.github.io/live/',
-      zipUrl: 'https://github.com/mdisplay/live/archive/refs/heads/master.zip',
+      url: 'https://mdisplay.github.io/live-es5/',
+      zipUrl: 'https://github.com/mdisplay/live-es5/archive/refs/heads/master.zip',
       zipDirectory: 'live-master',
       // url: 'http://192.168.1.11/mdisplay/live/',
-      zipFirst: true,
+      zipFirst: false,
       zipCheckInternet: false,
       exitCount: 0,
-      version: '1.4.4',
+      version: '1.5.0 (ES5 Fix)',
       // patch
       hello: 'World',
       initialized: false,
