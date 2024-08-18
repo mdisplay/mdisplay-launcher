@@ -65,6 +65,7 @@ public class SntpClient {
      * @return true if the transaction was successful.
      */
     public String requestTime(String host, int timeout) {
+        // converted to string instead of boolean for proper error message
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket();

@@ -52,6 +52,7 @@ public class CDVPluginSntp extends CordovaPlugin {
             public void run() {
                 String message = client.requestTime(server, timeout);
                 if(message != "success") {
+                    // modified for proper error message
                     callbackContext.error(message);
                 }
 

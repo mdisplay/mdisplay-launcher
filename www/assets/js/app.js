@@ -19,10 +19,10 @@ function App() {
     zipUrl: 'https://github.com/mdisplay/live/archive/refs/heads/master.zip',
     zipDirectory: 'live-master',
     // url: 'http://192.168.1.11/mdisplay/live/',
-    zipFirst: false,
+    zipFirst: true,
     zipCheckInternet: false,
     exitCount: 0,
-    version: '1.7.0', // patch
+    version: '1.7.1', // patch
     hello: 'World',
     initialized: false,
     editMode: false,
@@ -235,7 +235,7 @@ function App() {
       init: '#ffff20',
       error: '#ff1919',
       success: '#49ff50',
-      localInit: '#eeff43',
+      localInit: '#e684e6',
       local: '#17abff'
     };
     setTimeout(function () {
@@ -546,26 +546,41 @@ function App() {
   self.initializeZipFirst = function () {
     self.data.network.internetChecking = true;
     self.setNetworkCheckingStatus('Checking Local Availability...', 'localInit', true);
-    var localCopyNotAvailable = function localCopyNotAvailable() {
-      self.setNetworkCheckingStatus('Local copy unavailable.', 'error', true, 999);
+    var localCopyNotAvailable = function localCopyNotAvailable(message) {
+      self.setNetworkCheckingStatus(message || 'Local copy unavailable.', 'error', true, 999);
       setTimeout(function () {
         self.downloadZipUrl();
       }, 1500);
     };
     self.getZipDirectoryEntry(function (dirEntry) {
-      dirEntry.getFile('index.html', {
+      dirEntry.getFile('_expired', {
         create: false
       }, function (entry) {
-        // temp
-        // self.data.url = entry.toURL();
-        self.setNetworkCheckingStatus('OK. Local copy available.', 'local', true, 999);
-        setTimeout(function () {
-          self.doGoToUrl(entry.toURL(), self.data.zipCheckInternet);
-        }, 1500);
-        console.log('success what?', entry.toURL(), entry);
+        // new update available. download!
+        entry.remove(function () {
+          localCopyNotAvailable('Local copy EXPIRED');
+        }, function (err) {
+          setTimeout(() => {
+            // retry
+            self.initializeZipFirst();
+          }, 1000);
+        });
       }, function (err) {
-        localCopyNotAvailable();
-        console.log('error yes?', err);
+        // proceed: new update available (not expired)
+        dirEntry.getFile('index.html', {
+          create: false
+        }, function (entry) {
+          // temp
+          // self.data.url = entry.toURL();
+          self.setNetworkCheckingStatus('OK. Local copy available.', 'local', true, 999);
+          setTimeout(function () {
+            self.doGoToUrl(entry.toURL(), self.data.zipCheckInternet);
+          }, 1500);
+          console.log('success what?', entry.toURL(), entry);
+        }, function (err) {
+          localCopyNotAvailable();
+          console.log('error yes?', err);
+        });
       });
       console.log('getAppDirectoryEntry', dirEntry);
     }, function (err) {
