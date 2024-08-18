@@ -22,7 +22,7 @@ function App() {
     zipFirst: false,
     zipCheckInternet: false,
     exitCount: 0,
-    version: '1.6.0', // patch
+    version: '1.7.0', // patch
     hello: 'World',
     initialized: false,
     editMode: false,
@@ -254,11 +254,6 @@ function App() {
     }
     self.checkNetworkStatus();
     self.data.network.internetChecking = true;
-    var url;
-    url = 'http://192.168.1.11/qurapp/qurapp/public/api/time';
-    url = 'http://192.168.1.11/non';
-    url = 'http://plaintext.qurapp.com/api/time'; // https won't work when time is invalid
-    url = 'https://qurapp.com/api/time';
     self.setNetworkCheckingStatus('Checking Internet Connection...', 'init', true);
     var retry = function retry(okCallback) {
       setTimeout(function () {
@@ -295,25 +290,6 @@ function App() {
       });
       return;
     }
-    ajax.get(url).then(function (response) {
-      // alert('response : ' + response);
-      if (!(response && response.data)) {
-        console.log('Invalid response', response);
-        self.setNetworkCheckingStatus('INVALID response', 'error', false, 999);
-        retry(okCallback);
-        return;
-      }
-      self.setNetworkCheckingStatus('Internet Connection OK ', 'success', false, 1);
-      setTimeout(function () {
-        okCallback();
-        // self.data.network.internetChecking = false;
-      }, 1500);
-    }, function (err) {
-      console.log('err: ', err);
-      // alert('err: ' + err);
-      self.setNetworkCheckingStatus('Internet Connection FAILED - ' + err, 'error', false, 999);
-      retry(okCallback);
-    });
   };
   self.doGoToUrl = function (url, checkInternet) {
     if (self.data.editMode) {
@@ -683,6 +659,7 @@ function App() {
     console.log('Connection: ' + typeof Connection);
     console.log('WifiWizard2: ' + typeof WifiWizard2);
     console.log('cordova.file.dataDirectory: ' + cordova.file.dataDirectory);
+    console.log('cordova.plugins.sntp: ' + typeof cordova.plugins.sntp);
     self.isDeviceReady = true;
     self.bindCordovaEvents();
     if (self.pendingOpen) {

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="app.mdisplay.launcher" version="1.6.0" versionCode="11" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+<widget id="app.mdisplay.launcher" version="1.7.0" versionCode="12" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <access origin="http://192.168.1.11" />
 
     <access origin="*" />
