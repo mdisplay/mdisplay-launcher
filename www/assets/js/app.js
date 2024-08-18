@@ -53,7 +53,7 @@ function App() {
       }
     }
   };
-  self.SETTINGS_STORAGE_KEY = 'mdisplay-launcher.settings';
+  self.SETTINGS_STORAGE_KEY = 'mdisplay-launcher.settings2';
   self.getSizeFormatted = function (bytes) {
     var sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     if (bytes === 0) {
