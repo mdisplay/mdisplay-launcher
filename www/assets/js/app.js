@@ -22,7 +22,7 @@ function App() {
     zipFirst: true,
     zipCheckInternet: false,
     exitCount: 0,
-    version: '1.7.1', // patch
+    version: '1.8.0', // patch
     hello: 'World',
     initialized: false,
     editMode: false,
