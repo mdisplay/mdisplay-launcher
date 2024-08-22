@@ -22,7 +22,7 @@ function App() {
     zipFirst: true,
     zipCheckInternet: false,
     exitCount: 0,
-    version: '1.8.0', // patch
+    version: '1.9.0', // patch
     hello: 'World',
     initialized: false,
     editMode: false,
@@ -560,7 +560,7 @@ function App() {
         entry.remove(function () {
           localCopyNotAvailable('Local copy EXPIRED');
         }, function (err) {
-          setTimeout(() => {
+          setTimeout(function () {
             // retry
             self.initializeZipFirst();
           }, 1000);
@@ -673,8 +673,8 @@ function App() {
     console.log('navigator.connection: ' + typeof navigator.connection);
     console.log('Connection: ' + typeof Connection);
     console.log('WifiWizard2: ' + typeof WifiWizard2);
-    console.log('cordova.file.dataDirectory: ' + cordova.file.dataDirectory);
-    console.log('cordova.plugins.sntp: ' + typeof cordova.plugins.sntp);
+    console.log('cordova.file.dataDirectory: ' + (cordova.file && cordova.file.dataDirectory));
+    console.log('cordova.plugins.sntp: ' + (cordova.plugins && typeof cordova.plugins.sntp));
     self.isDeviceReady = true;
     self.bindCordovaEvents();
     if (self.pendingOpen) {

@@ -8,6 +8,10 @@
     <link rel="icon" type="image/png" href="assets/images/favicon.png" />
     <link rel="stylesheet" type="text/css" href="assets/vendors/reboot.css" />
     <link rel="stylesheet" type="text/css" href="assets/css/app.css" />
+    <script>
+      function dbb(message) {
+      }
+    </script>
   </head>
   <body>
     <div id="app" :class="[]" @click="onBodyClick()">
@@ -131,7 +135,7 @@
       if (hasCordova) {
         document.addEventListener('deviceready', function () {
           window.app.deviceReady();
-        });
+        }, false);
       } else {
         window.app.deviceReady();
         //   alert('Not intended to run in a non-cordova environment');
